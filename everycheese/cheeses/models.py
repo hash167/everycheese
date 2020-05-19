@@ -1,11 +1,19 @@
 from autoslug import AutoSlugField
 from django.db import models
 from model_utils.models import TimeStampedModel
+from django.urls import reverse
 
 from django_countries.fields import CountryField
 
 
 class Cheese(TimeStampedModel):
+
+    def get_absolute_url(self):
+        """Return the absolute url of the Cheese Detail page"""
+        return reverse(
+            'cheeses:detail',
+            kwargs={'slug': self.slug}
+        )
 
     class Firmness(models.TextChoices):
         UNSPECIFIED = "unspecified", "Unspecified"
