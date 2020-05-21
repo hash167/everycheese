@@ -9,9 +9,10 @@ from ..models import Cheese
 from ..views import (
     CheeseListView,
     CheeseDetailView,
-    CheeseCreateView
+    CheeseCreateView,
+    CheeseUpdateView
 )
-from .factories import CheeseFactory
+from .factories import CheeseFactory, cheese
 
 pytestmark = pytest.mark.django_db
 
@@ -33,8 +34,7 @@ def test_cheese_list_contains_2_cheeses(rf):
     assertContains(response, cheese2.name)
 
 
-def test_cheese_detail_view(rf):
-    cheese = CheeseFactory()
+def test_good_cheese_detail_view(rf, cheese):
     request = rf.get(reverse('cheeses:detail', kwargs={'slug': cheese.slug}))
     response = CheeseDetailView.as_view()(request, slug=cheese.slug)
     assertContains(response, cheese.name)
@@ -58,8 +58,42 @@ def test_cheese_create_form_valid(rf, admin_user):
     request = rf.post(reverse("cheeses:add"), form_data)
     request.user = admin_user
     CheeseCreateView.as_view()(request)
-
     cheese = Cheese.objects.get(name="Paski Sir")
     assert cheese.description == "A salty hard cheese"
     assert cheese.firmness == Cheese.Firmness.HARD
     assert cheese.creator == admin_user
+
+
+def cheese_create_correct_title(rf, admin_user):
+    """Page title for CheeseCreateView should be Add Cheese."""
+    request = rf.get(reverse('cheeses:add'))
+    request.user = admin_user
+    response = CheeseCreateView.as_view()(request)
+    assertContains(response, "Add Cheese")
+
+
+def good_cheese_update_view(rf, admin_user, heese):
+    url = reverse(
+        'cheeses:update',
+        kwargs={'slug': cheese.slug}
+    )
+    request = rf.get(url)
+    request.user = admin_user
+    response = CheeseUpdateView.as_view()(request, slug=cheese.slug)
+    assertContains(response, 'Update Cheese')
+
+def test_cheese_update(rf, admin_user, cheese):
+    """POST request to CheeseUpdateView updates a cheese
+    and redirects. """
+        # Make a request for our new cheese
+    form_data = {
+        'name': cheese.name,
+        'description': 'Something new',
+        'firmness': cheese.firmness
+    }
+    url = reverse("cheeses:update",kwargs={'slug': cheese.slug})
+    request = rf.post(url, form_data)
+    request.user = admin_user
+    CheeseUpdateView.as_view()(request, slug=cheese.slug)
+    cheese.refresh_from_db()
+    assert cheese.description == 'Something new'
