@@ -11,14 +11,25 @@ class UserChangeForm(forms.UserChangeForm):
 
 
 class UserCreationForm(forms.UserCreationForm):
+    """Form for creating new users with unique usernames.
 
-    error_message = forms.UserCreationForm.error_messages.update(
-        {
-            "duplicate_username": _(
-                "This username has already been taken."
-            )
-        }
-    )
+    The original implementation attempted to update the parent class'
+    ``error_messages`` dictionary in place and stored the return value of
+    ``dict.update`` (which is ``None``) on an ``error_message`` attribute.
+
+    Besides leaving an unused ``error_message`` attribute behind, mutating the
+    parent's dictionary has the side effect of globally changing the error
+    messages for *all* ``UserCreationForm`` usages in the project.  To avoid
+    these issues we create a copy of the parent's ``error_messages`` and extend
+    it with our custom message.
+    """
+
+    error_messages = {
+        **forms.UserCreationForm.error_messages,
+        "duplicate_username": _(
+            "This username has already been taken."
+        ),
+    }
 
     class Meta(forms.UserCreationForm.Meta):
         model = User
