@@ -52,9 +52,9 @@ class TestUserUpdateView:
             reverse("users:update"), form_data
         )
         request.user = user
-        session_middleware = SessionMiddleware()
+        session_middleware = SessionMiddleware(lambda req: None)
         session_middleware.process_request(request)
-        msg_middleware = MessageMiddleware()
+        msg_middleware = MessageMiddleware(lambda req: None)
         msg_middleware.process_request(request)
 
         response = UserUpdateView.as_view()(request)
